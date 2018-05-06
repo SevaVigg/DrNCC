@@ -1,0 +1,6 @@
+function VlnColorPlot(...){
+requires(Seurat)
+
+cellNums = sapply(object@ident, function(x) length( WhichCells( object, x)))
+
+}
