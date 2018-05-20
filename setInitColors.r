@@ -1,7 +1,7 @@
 setInitColors <- function(seuratObj){
 
-#This snippet sets a color code for all initial cells 
- 
+#This snippet sets a color code for all initial cells according to clusters. Used to draw slingshot lineages
+
 cellColors <- rep("grey", length(seuratObj@ident))
 
 cellColors[ grep("I",     names( seuratObj@ident))] = "cyan"
