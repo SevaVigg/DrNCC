@@ -1,4 +1,3 @@
-
 require(slingshot)
 
 seurObj <- ipmc
@@ -16,12 +15,9 @@ sds <- slingshot(tSNEVals, clust, start.clus = cl_tail ,end.clus=c( cl_IP, cl_MC
 
 cellColors <- rep("grey", length(clust))
 
-cellColors[as.numeric(levels(clust))[clust] == cl_MC] 	<- "black"
+cellColors[as.numeric(levels(clust))[clust] == cl_MC] 		<- "black"
 cellColors[as.numeric(levels(clust))[clust] == cl_tail] 	<- "red"
-cellColors[as.numeric(levels(clust))[clust] == cl_IP] 	<- "cyan"
-cellColors[as.numeric(levels(clust))[clust] == 17]		<- "pink"
-cellColors[as.numeric(levels(clust))[clust] == 33]		<- "blue"
-cellColors[as.numeric(levels(clust))[clust] == 18]		<- "magenta"
+cellColors[as.numeric(levels(clust))[clust] == cl_IP] 		<- "cyan"
 
 tSNE1	<- tSNEVals[ , 1]
 tSNE2	<- tSNEVals[ , 2]
