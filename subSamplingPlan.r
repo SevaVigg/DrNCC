@@ -25,7 +25,7 @@ ipmc            <- RunTSNE(ipmc, dims.use = 1:comps, theta = 0, perplexity = 15)
 source("R/plotInitTypesPcaTsne.r")
 plotInitTypesPcaTsne( ipmc, subSdir)
 
-resolDec 	<- 60
+resolDec 	<- 80
 
 source("R/getClusterTypes.r")
 clustTypes      <- getClusterTypes(ipmc)
