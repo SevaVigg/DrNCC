@@ -4,7 +4,8 @@ origIdent 	<- ipmc@ident
 
 ipmc		<- SubsetData(ipmc, ident.remove = c("W2", "m6"))
 
-for (comps in seq(5, 20, 5)){
+#for (comps in seq(5, 20, 5)){
+
 
 #resDir is created by seuratNorm
 dir.create( file.path( resDir, paste0( "c", comps)), showWarnings = FALSE)
@@ -32,7 +33,7 @@ plotTsneClusterTree( ipmc, plotResolDir)
 clust <- ipmc@ident
 
 source("R/getClusterTypes.r")
-clustTypes 	<- getClusterTypes(ipmc)
+clustTypes 	<- getClusterTypes(ipmc@ident)
 
 ipmcMD 	<- RunTSNE(ipmc, dims.use = 1:comps, theta = 0, perplexity = 15, dim.embed = comps) #we need this to get lineages and principal curves with slingShot
 
