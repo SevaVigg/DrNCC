@@ -3,7 +3,7 @@ plotInitTypesPcaTsne <- function( seuratObj, plotDir){
 dir.create( file.path( plotDir, "InitTypes_PCA_TSNE"), showWarnings = FALSE)
 plotDir	<- file.path( plotDir, "InitTypes_PCA_TSNE")
 
-cellColors <- gray.colors( length( levels(ipmc@ident)))
+cellColors <- gray.colors( length( levels(seuratObj@ident)))
 
 cellColors[ which(levels(ipmc@ident) == "I")]  = "cyan"
 cellColors[ which(levels(ipmc@ident) == "M")]  = "black"
@@ -12,7 +12,7 @@ cellColors[ which(levels(ipmc@ident) == "W2")] = "magenta"
 cellColors[ which(levels(ipmc@ident) == "Tl")] = "red"
 
 png( file.path( plotDir, "initCellsTsne.png"))
-	TSNEPlot(ipmc, colors.use = cellColors)
+	TSNEPlot(seuratObj, colors.use = cellColors)
 dev.off()
 }
 
