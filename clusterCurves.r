@@ -8,10 +8,10 @@ ipmc		<- SubsetData(ipmc, ident.remove = c("W2", "m6"))
 
 
 #resDir is created by seuratNorm
-dir.create( file.path( resDir, paste0( "c", comps)), showWarnings = FALSE)
 compsDir 	<- file.path( resDir, paste0( "c", comps))
-dir.create( file.path( compsDir, "Plot" ) , showWarnings = FALSE)
+dir.create( compsDir, showWarnings = FALSE)
 plotCompsDir	<- file.path( compsDir, "Plot")
+dir.create( plotCompsDir, showWarnings = FALSE)
 
 ipmc	 	<- RunPCA(ipmc, pc.genes = rownames( ipmc@data), pcs.compute = comps, do.print = FALSE)
 ipmc	 	<- RunTSNE(ipmc, dims.use = 1:comps, theta = 0, perplexity = 15)
@@ -21,10 +21,10 @@ plotInitTypesPcaTsne( ipmc, plotCompsDir)
 
 for (resolDec in seq(20, 100, 20)){ 
 
-dir.create( file.path( compsDir, paste0( "r", resolDec)), showWarnings = FALSE)
 resolDir 	<- file.path( compsDir, paste0( "r", resolDec))
-dir.create( file.path( resolDir, "Plot" ) , showWarnings = FALSE)
+dir.create( resolDir, showWarnings = FALSE)
 plotResolDir	<- file.path( resolDir, "Plot")
+dir.create( plotResolDir , showWarnings = FALSE)
 
 ipmc	 	<- FindClusters(ipmc, reduction.type = "pca", dims.use = 1:comps, resolution = resolDec/10, print.output = 0)
 ipmc 		<- BuildClusterTree(ipmc, pcs.use = 1:comps, do.reorder = TRUE, reorder.numeric = TRUE, show.progress = FALSE, do.plot = FALSE)
@@ -49,14 +49,14 @@ MC_linName	<- paste0("Lineage", MC_linId)
 IP_linId	<- which( as.numeric( slingObjMD@lineageControl$end.clus) == clustTypes["I"])
 IP_linName	<- paste0("Lineage", IP_linId)
 
-ipmc_2D		<- RunTSNE(ipmc, dims.use = 1:comps, theta = 0, perplexity = 15, dim.embed = 2)
-plotVals	<- ipmc_2D@dr$tsne@cell.embeddings
+ipmc2D		<- RunTSNE(ipmc, dims.use = 1:comps, theta = 0, perplexity = 15, dim.embed = 2)
+plotVals	<- ipmc2D@dr$tsne@cell.embeddings
 
 source("R/getLineageCoords.r")
-LineageTree	<- getLineageCoords(ipmc_2D, slingObjMD)  
+LineageTree	<- getLineageCoords(ipmc2D, slingObjMD)  
 
-dir.create( file.path( plotResolDir, "lineagePlots"), showWarnings = FALSE)
 linPlotDir <- ( file.path( plotResolDir, "lineagePlots"))
+dir.create( linPlotDir,  showWarnings = FALSE)
 
 source("R/plot2DallLineages.r")
 plot2DallLineages( LineageTree, plotVals, clustTypes, plotResolDir)

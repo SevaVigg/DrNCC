@@ -1,9 +1,9 @@
 getLineageCoords <- function(seuratObj, slingObj){
 
-lineageIds	<- seq( 1, length( slingObj@lineageControl$end.clus))
-lineageNames	<- paste0("Lineage", lineageIds)
+cellClust	<- slingObj@clusterLabels	#vector containng cluster ids named with cognate cells
+lineageNames	<- names(slingObj@lineages)
 lineageCoords	<- sapply( lineageNames, function(x){
  			sapply( slingObj@lineages[[x]], 
-				function(y) apply( seuratObj@dr$tsne@cell.embeddings[ WhichCells(seuratObj, as.numeric(y)), ], 2, mean)) })
+				function(y) apply( seuratObj@dr$tsne@cell.embeddings[ names(cellClust)[cellClust == y], ], 2, mean)) })
 return(lineageCoords)
 }
