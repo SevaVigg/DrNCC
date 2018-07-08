@@ -2,14 +2,9 @@
 # cell subsampling 
 
 source("R/seuratNorm.r")
+resDir		<-	file.path( getwd(), "Res")
 subSDir 	<- 	file.path( resDir, "Subsampling")
 dir.create( subSDir, showWarnings = FALSE)
-
-sourceFileName 	<- file.path( getwd(), "Subsampling", "15_samples_4.txt")
-subS		<- read.table( sourceFileName, row.names = 1, stringsAsFactors = TRUE )
-nClust		<- apply(subS, 2, max)
-cat(nClust, "\n")
-
     
 origIdent       <- ipmc@ident
 
@@ -27,18 +22,18 @@ cat("now calculate PCA", "\n")
 ipmc            <- RunPCA(ipmc, pc.genes = rownames( ipmc@data), pcs.compute = comps, do.print = FALSE) 
 # this is 2D tSNE for all cells, which we will use for drawing
 cat("now calculate 2D tSNE", "\n")
-ipmc2D		<- RunTSNE(ipmc, dims.use = 1:comps, theta = 0, perplexity = 15)
+ipmc2D		<- RunTSNE(ipmc, dims.use = 1:comps, theta = 0, perplexity = 15, dim.embed = 2)
 plotVals	<- ipmc2D@dr$tsne@cell.embeddings
 
-#and this is MD tSNE for all cells, which we will use for embedding trajectories
 cat("now calculate MD tSNE", "\n")
-ipmcMD  	<- RunTSNE(ipmc, dims.use = 1:comps, theta = 0, perplexity = 15, dim.embed = comps) #we need this to get lineages and principal curves with slingShot
-tSNEValsMD      <- as.matrix(ipmcMD@dr$tsne@cell.embeddings)
+#ipmcMD  	<- RunTSNE(ipmc, dims.use = 1:comps, theta = 0, perplexity = 15, dim.embed = comps) 
+#we need this to get lineages and principal curves with slingShot
+#tSNEValsMD      <- as.matrix(ipmcMD@dr$tsne@cell.embeddings)
 
 source("R/plotInitTypesPcaTsne.r")
-plotInitTypesPcaTsne( ipmc2D, subSDir)
+#plotInitTypesPcaTsne( ipmc2D, compsDir)
 
-resolDec 	<- 80
+resolDec 	<- 75
 
 resolDir 	<- file.path( compsDir, paste0( "r", resolDec))
 dir.create( resolDir, showWarnings = FALSE)
@@ -47,9 +42,28 @@ dir.create( plotResolDir , showWarnings = FALSE)
 
 ipmc	 	<- FindClusters(ipmc, reduction.type = "pca", dims.use = 1:comps, resolution = resolDec/10, print.output = 0)
 ipmc 		<- BuildClusterTree(ipmc, pcs.use = 1:comps, do.reorder = TRUE, reorder.numeric = TRUE, show.progress = FALSE, do.plot = FALSE)
+
 source("R/plotTsneClusterTree.r")
 plotTsneClusterTree( ipmc, plotResolDir) 
 
+
+#NO BRANCH
+#removing the branch
+#	noBranch 	<- WhichCells(ipmc, ident = c(29:53))
+#	ipmcNB 		<- SubsetData(ipmc, ident.remove = c(29:53))
+#	noBranchDir	<- file.path( resolDir, "noBranch")
+#	dir.create( noBranchDir, showWarnings = FALSE)
+#	plotResolDir	<- noBranchDir
+#
+#	# calculate PCA
+#	cat("now calculate noBranch PCA", "\n") 
+#	ipmcNB          <- RunPCA(ipmcNB, pc.genes = rownames( ipmcNB@data), pcs.compute = comps, do.print = FALSE) 
+#	# this is 2D tSNE for all cells, which we will use for drawing
+#	cat("now calculate 2D tSNE", "\n")
+#	ipmc2DNB	<- RunTSNE(ipmcNB, dims.use = 1:comps, theta = 0, perplexity = 15)
+#	plotVals	<- ipmc2DNB@dr$tsne@cell.embeddings
+#
+#BRANCH REMOVAL PROCEDURE ENDs
 
 source("R/getClusterTypes.r")
 allClusterTypes <- getClusterTypes( ipmc@ident)
@@ -63,29 +77,32 @@ source("R/plot2DidLineage.r")
 source("R/plot2Dcells.r")
 
 png( file.path( plotResolDir, "Lineage_plot.png"))
-	plot2Dcells( plotVals, ipmc@ident, allClusterTypes, plotResolDir) 
+	plot2Dcells( plotVals, ipmc@ident, allClusterTypes, plotResolDir)  #Note that only ipmc contains correct clustering, not ipmc2D
 
 MC_linMatrix	<- integer(0)
 MC_linTree	<- numeric(0)
 IP_linMatrix	<- integer(0)
 IP_linTree	<- numeric(0)
 
-	#for ( subRound in 1:1 ){
-	for ( subRound in 1:ncol(subS)){
-	clFactor	<- factor( subS[, subRound])
-	names(clFactor)	<- rownames(subS)
-	clustTypes	<- getClusterTypes( clFactor )
-	cellsRoundObj	<- SubsetData(ipmc, cells.use = rownames(subS)) #this is a SeuratObject containing only cells in the subRound
-	tSNEValsRound	<- tSNEValsMD[rownames(subS), ]	#this is a stub; to be substituted for the round specific cells
-	slingObjRound 	<- slingshot( tSNEValsRound, clFactor, start.clus = clustTypes["Tl"], end.clus = c(clustTypes["I"], clustTypes["M"]) )
+#	for ( subRound in 1:1 ){
+	for ( subRound in 1:20){
+	subSample	<- sample( ipmc@cell.names, round( length( ipmc@cell.names)*.85)) #contains cell names only
+	ipmcSub		<- SubsetData( ipmc, cells.use = subSample) #this is a SeuratObject containing only cells in the subRound
+	ipmcSub		<- RunPCA( ipmcSub, pc.genes = allGenes, pcs.compute = comps, do.print = FALSE) 
+	ipmcSub		<- FindClusters( ipmcSub, reduction.type = "pca", dims.use = 1:comps, resolution = resolDec/10, print.output = 0, force.recalc = TRUE)
+	ipmcSub 	<- BuildClusterTree(ipmcSub, genes.use = allGenes, pcs.use = 1:comps, do.reorder = TRUE, reorder.numeric = TRUE, do.plot = FALSE)
+	ipmcSubMD  	<- RunTSNE( ipmcSub, dims.use = 1:comps, theta = 0, perplexity = 15, dim.embed = comps) 
+	#we need this to get lineages and principal curves with slingShot
+	tSNEValsMD      <- as.matrix( ipmcSubMD@dr$tsne@cell.embeddings)
+	clustTypes	<- getClusterTypes( ipmcSub@ident)	
+	slingObjRound 	<- slingshot( tSNEValsMD, ipmcSub@ident, start.clus = clustTypes["Tl"], end.clus = c(clustTypes["I"], clustTypes["M"]) )
 	MC_linId	<- which( as.numeric( slingObjRound@lineageControl$end.clus) == clustTypes["M"])
 	MC_linMatrix	<- cbind( MC_linMatrix, slingObjRound@lineages[[MC_linId]]) 
 	MC_linName	<- paste0("Lineage", MC_linId)
 	IP_linId	<- which( as.numeric( slingObjRound@lineageControl$end.clus) == clustTypes["I"])
 	IP_linName	<- paste0("Lineage", IP_linId)
-	IP_linMatrix	<- cbind(IP_linMatrix, slingObjRound@lineages[[IP_linID]])
+	IP_linMatrix	<- cbind(IP_linMatrix, slingObjRound@lineages[[IP_linId]])
 	LineageTree	<- getLineageCoords( ipmc2D, slingObjRound) 
-	#MC_linTree	<- cbind( MC_linTree, LineageTree[
 	lineageId	<- MC_linId 
 	plot2DidLineage( LineageTree, lineageId)	
 	lineageId	<- IP_linId 
@@ -93,7 +110,3 @@ IP_linTree	<- numeric(0)
 }
 dev.off()
 
-
-
-
-clustTypes      <- getClusterTypes(ipmc@ident)
