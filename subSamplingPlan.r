@@ -33,7 +33,7 @@ cat("now calculate MD tSNE", "\n")
 source("R/plotInitTypesPcaTsne.r")
 #plotInitTypesPcaTsne( ipmc2D, compsDir)
 
-resolDec 	<- 75
+resolDec 	<- 80
 
 resolDir 	<- file.path( compsDir, paste0( "r", resolDec))
 dir.create( resolDir, showWarnings = FALSE)
@@ -79,10 +79,15 @@ source("R/plot2Dcells.r")
 png( file.path( plotResolDir, "Lineage_plot.png"))
 	plot2Dcells( plotVals, ipmc@ident, allClusterTypes, plotResolDir)  #Note that only ipmc contains correct clustering, not ipmc2D
 
-MC_linMatrix	<- integer(0)
+MC_linList	<- list()
 MC_linTree	<- numeric(0)
-IP_linMatrix	<- integer(0)
+IP_linList	<- list()
 IP_linTree	<- numeric(0)
+
+MC_linFileName	<- file.path( resolDir, "MC_lineages.txt")
+IP_linFileName	<- file.path( resolDir, "IP_lineages.txt")
+MC_linFile 	<- file( MC_linFileName, open = "w")
+IP_linFile	<- file( IP_linFileName, open = "w")
 
 #	for ( subRound in 1:1 ){
 	for ( subRound in 1:20){
@@ -97,11 +102,11 @@ IP_linTree	<- numeric(0)
 	clustTypes	<- getClusterTypes( ipmcSub@ident)	
 	slingObjRound 	<- slingshot( tSNEValsMD, ipmcSub@ident, start.clus = clustTypes["Tl"], end.clus = c(clustTypes["I"], clustTypes["M"]) )
 	MC_linId	<- which( as.numeric( slingObjRound@lineageControl$end.clus) == clustTypes["M"])
-	MC_linMatrix	<- cbind( MC_linMatrix, slingObjRound@lineages[[MC_linId]]) 
+	MC_linList[[subRound]]	<- slingObjRound@lineages[[MC_linId]] 
 	MC_linName	<- paste0("Lineage", MC_linId)
 	IP_linId	<- which( as.numeric( slingObjRound@lineageControl$end.clus) == clustTypes["I"])
 	IP_linName	<- paste0("Lineage", IP_linId)
-	IP_linMatrix	<- cbind(IP_linMatrix, slingObjRound@lineages[[IP_linId]])
+	IP_linList[[subRound]]	<- slingObjRound@lineages[[IP_linId]]
 	LineageTree	<- getLineageCoords( ipmc2D, slingObjRound) 
 	lineageId	<- MC_linId 
 	plot2DidLineage( LineageTree, lineageId)	
@@ -109,4 +114,7 @@ IP_linTree	<- numeric(0)
 	plot2DidLineage( LineageTree, lineageId)	
 }
 dev.off()
-
+lapply(MC_linList, function(x) cat( file = MC_linFile, x, "\n"))
+lapply(IP_linList, function(x) cat( file = IP_linFile, x, "\n"))
+close( MC_linFile)
+close( IP_linFile)
