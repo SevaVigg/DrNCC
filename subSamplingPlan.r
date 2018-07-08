@@ -76,7 +76,7 @@ source("R/plot2DallLineages.r")
 source("R/plot2DidLineage.r")
 source("R/plot2Dcells.r")
 
-png( file.path( plotResolDir, "Lineage_plot.png"))
+png( file.path( plotResolDir, "MC_subsampling.png"))
 	plot2Dcells( plotVals, ipmc@ident, allClusterTypes, plotResolDir)  #Note that only ipmc contains correct clustering, not ipmc2D
 
 MC_linList	<- list()
@@ -86,16 +86,24 @@ IP_linTree	<- numeric(0)
 
 MC_linFileName	<- file.path( resolDir, "MC_lineages.txt")
 IP_linFileName	<- file.path( resolDir, "IP_lineages.txt")
+sampleFileName	<- file.path( resolDir, "sample.txt")
 MC_linFile 	<- file( MC_linFileName, open = "w")
 IP_linFile	<- file( IP_linFileName, open = "w")
+sampleFile	<- file( sampleFileName, open = "w")
 
-#	for ( subRound in 1:1 ){
-	for ( subRound in 1:20){
-	subSample	<- sample( ipmc@cell.names, round( length( ipmc@cell.names)*.85)) #contains cell names only
+nRounds		<- 10
+keepShare	<- .9
+
+sampleMatrix	<- sapply(1:nRounds, function(x) sample(ipmc@cell.names, size = round( length( ipmc@cell.names)*keepShare), replace = FALSE))
+write.table(sampleMatrix, file = sampleFile)
+close( sampleFile)
+
+for ( subRound in 1:nRounds ){
+	subSample	<- sampleMatrix[ , subRound ]
 	ipmcSub		<- SubsetData( ipmc, cells.use = subSample) #this is a SeuratObject containing only cells in the subRound
 	ipmcSub		<- RunPCA( ipmcSub, pc.genes = allGenes, pcs.compute = comps, do.print = FALSE) 
-	ipmcSub		<- FindClusters( ipmcSub, reduction.type = "pca", dims.use = 1:comps, resolution = resolDec/10, print.output = 0, force.recalc = TRUE)
-	ipmcSub 	<- BuildClusterTree(ipmcSub, genes.use = allGenes, pcs.use = 1:comps, do.reorder = TRUE, reorder.numeric = TRUE, do.plot = FALSE)
+	ipmcSub		<- FindClusters( ipmcSub, reduction.type = "pca", dims.use = 1:comps, resolution = resolDec/10,  print.output = 0, force.recalc = TRUE) 
+	ipmcSub 	<- BuildClusterTree(ipmcSub, genes.use = allGenes, pcs.use = 1:comps, do.reorder = TRUE, reorder.numeric = TRUE, do.plot = FALSE, show.progress = FALSE)
 	ipmcSubMD  	<- RunTSNE( ipmcSub, dims.use = 1:comps, theta = 0, perplexity = 15, dim.embed = comps) 
 	#we need this to get lineages and principal curves with slingShot
 	tSNEValsMD      <- as.matrix( ipmcSubMD@dr$tsne@cell.embeddings)
@@ -110,8 +118,8 @@ IP_linFile	<- file( IP_linFileName, open = "w")
 	LineageTree	<- getLineageCoords( ipmc2D, slingObjRound) 
 	lineageId	<- MC_linId 
 	plot2DidLineage( LineageTree, lineageId)	
-	lineageId	<- IP_linId 
-	plot2DidLineage( LineageTree, lineageId)	
+#	lineageId	<- IP_linId 
+#	plot2DidLineage( LineageTree, lineageId)	
 }
 dev.off()
 lapply(MC_linList, function(x) cat( file = MC_linFile, x, "\n"))
