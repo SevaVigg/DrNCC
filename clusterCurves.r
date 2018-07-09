@@ -4,6 +4,7 @@ origIdent 	<- ipmc@ident
 
 ipmc		<- SubsetData(ipmc, ident.remove = c("W2", "m6"))
 
+#the folloing loop is over different comps, creates subdirectories for each number of comps
 for (comps in 15){
 
 
