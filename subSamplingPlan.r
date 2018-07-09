@@ -76,7 +76,7 @@ source("R/plot2DallLineages.r")
 source("R/plot2DidLineage.r")
 source("R/plot2Dcells.r")
 
-png( file.path( plotResolDir, "MC_subsampling.png"))
+png( file.path( plotResolDir, "IP_subsampling.png"))
 	plot2Dcells( plotVals, ipmc@ident, allClusterTypes, plotResolDir)  #Note that only ipmc contains correct clustering, not ipmc2D
 
 MC_linList	<- list()
@@ -118,8 +118,8 @@ for ( subRound in 1:nRounds ){
 	LineageTree	<- getLineageCoords( ipmc2D, slingObjRound) 
 	lineageId	<- MC_linId 
 	plot2DidLineage( LineageTree, lineageId)	
-#	lineageId	<- IP_linId 
-#	plot2DidLineage( LineageTree, lineageId)	
+	lineageId	<- IP_linId 
+	plot2DidLineage( LineageTree, lineageId)	
 }
 dev.off()
 lapply(MC_linList, function(x) cat( file = MC_linFile, x, "\n"))
