@@ -91,8 +91,9 @@ MC_linFile 	<- file( MC_linFileName, open = "w")
 IP_linFile	<- file( IP_linFileName, open = "w")
 sampleFile	<- file( sampleFileName, open = "w")
 
-nRounds		<- 10
-keepShare	<- .9
+nRounds		<- 5
+keepShare	<- 0.9
+
 
 sampleMatrix	<- sapply(1:nRounds, function(x) sample(ipmc@cell.names, size = round( length( ipmc@cell.names)*keepShare), replace = FALSE))
 write.table(sampleMatrix, file = sampleFile)

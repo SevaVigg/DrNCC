@@ -4,10 +4,14 @@ origIdent 	<- ipmc@ident
 
 ipmc		<- SubsetData(ipmc, ident.remove = c("W2", "m6"))
 
-#for (comps in seq(5, 20, 5)){
+for (comps in 15){
 
 
 #resDir is created by seuratNorm
+
+resDir <- file.path( getwd(), "test")
+dir.create( resDir, showWarnings = FALSE)
+
 compsDir 	<- file.path( resDir, paste0( "c", comps))
 dir.create( compsDir, showWarnings = FALSE)
 plotCompsDir	<- file.path( compsDir, "Plot")
@@ -19,7 +23,7 @@ source("R/plotInitTypesPcaTsne.r")
 plotInitTypesPcaTsne( ipmc, plotCompsDir)
 
 
-for (resolDec in seq(20, 100, 20)){ 
+for (resolDec in 80){ 
 
 resolDir 	<- file.path( compsDir, paste0( "r", resolDec))
 dir.create( resolDir, showWarnings = FALSE)
@@ -63,15 +67,20 @@ plot2DallLineages( LineageTree, plotVals, clustTypes, plotResolDir)
 
 source("R/lineageVlnPlot.r")
 source("R/plot2DidLineage.r")
+source("R/plot2Dcells.r")
+
 
 #allGenes <- "sox10" # NB !!!
 
-for (lineageId in seq(1, length( slingObjMD@lineages))){
-	dir.create( file.path( linPlotDir, names(slingObjMD@lineages)[lineageId] ), showWarnings = FALSE)
-	linIdPlotDir <- file.path( linPlotDir, names(slingObjMD@lineages)[lineageId] )
-	plot2DidLineage(ipmcMD, LineageTree, lineageId, MC_linId, IP_linId, plotVals, clustTypes, linIdPlotDir)	
-	for (gene in allGenes) lineageVlnPlot( ipmcMD, slingObjMD, gene, lineageId, MC_linId, IP_linId, linIdPlotDir)
-}
+	for (lineageId in seq(1, length( slingObjMD@lineages))){
+		linIdPlotDir <- file.path( linPlotDir, names( slingObjMD@lineages)[lineageId] )
+		dir.create( linIdPlotDir, showWarnings = FALSE)
+		png( file.path( linIdPlotDir, paste0( "Lineage", lineageId, "_plot.png")))
+        		plot2Dcells( plotVals, ipmc@ident, clustTypes, linIdPlotDir)
+			plot2DidLineage( LineageTree, lineageId)
+		dev.off()	
+		for (gene in allGenes) lineageVlnPlot( ipmcMD, slingObjMD, gene, lineageId, MC_linId, IP_linId, linIdPlotDir)
+	}
 } #comps
 } #resolDec 
 

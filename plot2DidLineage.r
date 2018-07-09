@@ -1,4 +1,4 @@
-plot2DidLineage <- function( LineageTee, lineageId){
+plot2DidLineage <- function( LineageTree, lineageId){
 
 #this snippet requires previously open png with cell plot at plotVals coordinates
 
