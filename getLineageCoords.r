@@ -1,6 +1,8 @@
 getLineageCoords <- function(seuratObj, slingObj){
 
-cellClust	<- slingObj@clusterLabels	#vector containng cluster ids named with cognate cells
+cellClust	<-  sapply(rownames(slingObj@clusterLabels), function(x) colnames(slingObj@clusterLabels)[which(as.logical(slingObj@clusterLabels[x, ]))])
+		#vector containng cluster ids named with cognate cells
+
 lineageNames	<- names(slingObj@lineages)
 lineageCoords	<- sapply( lineageNames, function(x){
  			sapply( slingObj@lineages[[x]], 

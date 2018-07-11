@@ -49,9 +49,9 @@ if(!require(slingshot)){
 tSNEValsMD	<- as.matrix(ipmcMD@dr$tsne@cell.embeddings)
 slingObjMD 	<- slingshot(tSNEValsMD, clust, start.clus = clustTypes["Tl"],end.clus=c(clustTypes["I"], clustTypes["M"]))
 
-MC_linId	<- which( as.numeric( slingObjMD@lineageControl$end.clus) == clustTypes["M"])
+MC_linId	<- which( as.numeric( slingObjMD@slingParams$end.clus) == clustTypes["M"])
 MC_linName	<- paste0("Lineage", MC_linId)
-IP_linId	<- which( as.numeric( slingObjMD@lineageControl$end.clus) == clustTypes["I"])
+IP_linId	<- which( as.numeric( slingObjMD@slingParams$end.clus) == clustTypes["I"])
 IP_linName	<- paste0("Lineage", IP_linId)
 
 ipmc2D		<- RunTSNE(ipmc, dims.use = 1:comps, theta = 0, perplexity = 15, dim.embed = 2)
@@ -70,7 +70,6 @@ source("R/lineageVlnPlot.r")
 source("R/plot2DidLineage.r")
 source("R/plot2Dcells.r")
 
-
 #allGenes <- "sox10" # NB !!!
 
 	for (lineageId in seq(1, length( slingObjMD@lineages))){
@@ -80,6 +79,7 @@ source("R/plot2Dcells.r")
         		plot2Dcells( plotVals, ipmc@ident, clustTypes, linIdPlotDir)
 			plot2DidLineage( LineageTree, lineageId)
 		dev.off()	
+#Now plot violin plots for all genes for the lineages
 		for (gene in allGenes) lineageVlnPlot( ipmcMD, slingObjMD, gene, lineageId, MC_linId, IP_linId, linIdPlotDir)
 	}
 } #comps
@@ -88,8 +88,7 @@ source("R/plot2Dcells.r")
 
 cat("Now getting principle curves\n")
 
-slingObjMD	<- getCurves(slingObjMD, extend = "n", shrink = TRUE, thresh = 0.001, maxit = 10)
-psTime		<- pseudotime(slingObjMD)
+psTime		<- slingPseudotime(slingObjMD)
 source("R/getPseudoOrder.r")
 curves		<- getPseudoOrder(slingObjMD)
 

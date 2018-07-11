@@ -110,15 +110,15 @@ for ( subRound in 1:nRounds ){
 	tSNEValsMD      <- as.matrix( ipmcSubMD@dr$tsne@cell.embeddings)
 	clustTypes	<- getClusterTypes( ipmcSub@ident)	
 	slingObjRound 	<- slingshot( tSNEValsMD, ipmcSub@ident, start.clus = clustTypes["Tl"], end.clus = c(clustTypes["I"], clustTypes["M"]) )
-	MC_linId	<- which( as.numeric( slingObjRound@lineageControl$end.clus) == clustTypes["M"])
+	MC_linId	<- which( as.numeric( slingObjRound@slingParams$end.clus) == clustTypes["M"])
 	MC_linList[[subRound]]	<- slingObjRound@lineages[[MC_linId]] 
 	MC_linName	<- paste0("Lineage", MC_linId)
-	IP_linId	<- which( as.numeric( slingObjRound@lineageControl$end.clus) == clustTypes["I"])
+	IP_linId	<- which( as.numeric( slingObjRound@slingParams$end.clus) == clustTypes["I"])
 	IP_linName	<- paste0("Lineage", IP_linId)
 	IP_linList[[subRound]]	<- slingObjRound@lineages[[IP_linId]]
 	LineageTree	<- getLineageCoords( ipmc2D, slingObjRound) 
-	lineageId	<- MC_linId 
-	plot2DidLineage( LineageTree, lineageId)	
+	#lineageId	<- MC_linId 
+	#plot2DidLineage( LineageTree, lineageId)	
 	lineageId	<- IP_linId 
 	plot2DidLineage( LineageTree, lineageId)	
 }
