@@ -1,19 +1,22 @@
-source("R/seuratNorm.r")
+#source("R/seuratNormImputedWT.r")
 
 origIdent 	<- ipmc@ident
 
-ipmc		<- SubsetData(ipmc, ident.remove = c("W2", "m6"))
+#remove mutant cells
+
+#ipmc		<- SubsetData(ipmc, ident.remove = c("W2", "m6"))
 
 #the folloing loop is over different comps, creates subdirectories for each number of comps
+
 for (comps in 15){
 
 
 #resDir is created by seuratNorm
 
-resDir <- file.path( getwd(), "test")
-dir.create( resDir, showWarnings = FALSE)
+#resDir <- file.path( getwd(), "Imputed")
+#dir.create( resDir, showWarnings = FALSE)
 
-compsDir 	<- file.path( resDir, paste0( "c", comps))
+compsDir 	<- file.path( seedDir, paste0( "c", comps))
 dir.create( compsDir, showWarnings = FALSE)
 plotCompsDir	<- file.path( compsDir, "Plot")
 dir.create( plotCompsDir, showWarnings = FALSE)
@@ -24,7 +27,7 @@ source("R/plotInitTypesPcaTsne.r")
 plotInitTypesPcaTsne( ipmc, plotCompsDir)
 
 
-for (resolDec in 80){ 
+for (resolDec in c(15)){ 
 
 resolDir 	<- file.path( compsDir, paste0( "r", resolDec))
 dir.create( resolDir, showWarnings = FALSE)
@@ -47,7 +50,7 @@ if(!require(slingshot)){
 }
 
 tSNEValsMD	<- as.matrix(ipmcMD@dr$tsne@cell.embeddings)
-slingObjMD 	<- slingshot(tSNEValsMD, clust, start.clus = clustTypes["Tl"],end.clus=c(clustTypes["I"], clustTypes["M"]))
+slingObjMD 	<- slingshot(tSNEValsMD, ipmcMD@ident, start.clus = clustTypes["Tl"],end.clus=c(clustTypes["I"], clustTypes["M"]))
 
 MC_linId	<- which( as.numeric( slingObjMD@slingParams$end.clus) == clustTypes["M"])
 MC_linName	<- paste0("Lineage", MC_linId)
@@ -66,30 +69,33 @@ dir.create( linPlotDir,  showWarnings = FALSE)
 source("R/plot2DallLineages.r")
 plot2DallLineages( LineageTree, plotVals, clustTypes, plotResolDir)
 
-source("R/lineageVlnPlot.r")
-source("R/plot2DidLineage.r")
-source("R/plot2Dcells.r")
+#the following part plot lineage plots for all lineages
+
+#source("R/lineageVlnPlot.r")
+#source("R/plot2DidLineage.r")
+#source("R/plot2Dcells.r")
 
 #allGenes <- "sox10" # NB !!!
 
-	for (lineageId in seq(1, length( slingObjMD@lineages))){
-		linIdPlotDir <- file.path( linPlotDir, names( slingObjMD@lineages)[lineageId] )
-		dir.create( linIdPlotDir, showWarnings = FALSE)
-		png( file.path( linIdPlotDir, paste0( "Lineage", lineageId, "_plot.png")))
-        		plot2Dcells( plotVals, ipmc@ident, clustTypes, linIdPlotDir)
-			plot2DidLineage( LineageTree, lineageId)
-		dev.off()	
+#	for (lineageId in seq(1, length( slingObjMD@lineages))){
+#		linIdPlotDir <- file.path( linPlotDir, names( slingObjMD@lineages)[lineageId] )
+#		dir.create( linIdPlotDir, showWarnings = FALSE)
+#		png( file.path( linIdPlotDir, paste0( "Lineage", lineageId, "_plot.png")))
+ #       		plot2Dcells( plotVals, ipmc@ident, clustTypes, linIdPlotDir)
+#			plot2DidLineage( LineageTree, lineageId)
+#		dev.off()	
 #Now plot violin plots for all genes for the lineages
-		for (gene in allGenes) lineageVlnPlot( ipmcMD, slingObjMD, gene, lineageId, MC_linId, IP_linId, linIdPlotDir)
-	}
+#		for (gene in allGenes) lineageVlnPlot( ipmcMD, slingObjMD, gene, lineageId, MC_linId, IP_linId, linIdPlotDir)
+#	}
+
 } #comps
 } #resolDec 
 
 
-cat("Now getting principle curves\n")
+#cat("Now getting principle curves\n")
 
-psTime		<- slingPseudotime(slingObjMD)
-source("R/getPseudoOrder.r")
-curves		<- getPseudoOrder(slingObjMD)
+#psTime		<- slingPseudotime(slingObjMD)
+#source("R/getPseudoOrder.r")
+#curves		<- getPseudoOrder(slingObjMD)
 
 
