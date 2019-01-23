@@ -1,7 +1,7 @@
-plot2DallLineages <- function( LineageTree, plotVals, clustTypes, plotDir){
+plot2DallLineages <- function( LineageTree, plotVals, clustTypes, plotDir, LineageId){
 
-source("R/setClusterColors.r")
-cellColors <- setClusterColors(ipmc, clustTypes)
+source("R/setClusterColor.r") 
+cellColors <- setClusterColor(ipmc, clustTypes, LineageTree[[LineageId]])
 
 png( file.path( plotDir, "allLineages.png"))
 	plot( plotVals[,2]~plotVals[,1], cex = 0.7, pch = 16, col = cellColors, xlab = "tSNE1", ylab = "tSNE2")

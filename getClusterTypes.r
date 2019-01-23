@@ -13,10 +13,15 @@ cl_MC	<- which.max( sapply(cellClusters, function(x) if(length(x[grep("MC", x)])
 cl_tail	<- which.max( sapply(cellClusters, function(x) if(length(x[grep("tails", x)])==0) 0 else ( 1 + length( grep("tails", x)))/sqrt(1+length(x))))
 
 clusterTypes 			<- seq( 1:nClust)
+if (length(unique(c(cl_IP, cl_MC, cl_tail))) < 3) {cat( "Some reference clusters conincide \n")
+							 attr(clusterType, which = "success") <- TRUE
+							 return( clusterTypes)}
 names( clusterTypes)		<- rep( "other", nClust)
 names( clusterTypes)[ as.numeric(names(cl_IP))]		<- "I"
 names( clusterTypes)[ as.numeric(names(cl_MC))]		<- "M"
 names( clusterTypes)[ as.numeric(names(cl_tail))]	<- "Tl"
+
+attr(clusterTypes, which = "success") <- TRUE
 
 return(clusterTypes)
 }

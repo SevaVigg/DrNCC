@@ -1,9 +1,9 @@
-if (!requireNamespace("BiocManager", quietly = TRUE)){
-    install.packages("BiocManager")}
 
 if (!require("vsn")){
-BiocManager::install("vsn", version = "3.8")
-library(vsn)}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    	install.packages("BiocManager")
+	BiocManager::install("vsn", version = "3.8")
+}
 
 if(!require("NanoStringNorm")){
   install.packages("NanoStringNorm", dependencies = TRUE)
@@ -12,13 +12,8 @@ if(!require("NanoStringNorm")){
 require(preprocessCore)
 require(data.table)
 
-qualDir <- file.path(getwd(), "QualityControl")
-plotDir <- file.path(getwd(), "QualityControl", "Plot")
-resDir	<- file.path(getwd(), "QualityControl", "Res")
-
-dir.create( qualDir, showWarnings = FALSE)
-dir.create( plotDir, showWarnings = FALSE)
-dir.create( resDir, showWarnings = FALSE)
+plotDir <- file.path(getwd(), "Plot")
+resDir	<- file.path(getwd(), "Res")
 
 qualContLogFile	<- file(paste0(resDir, .Platform$file.sep, "qualContLog.txt"), open = "w")
 
@@ -49,15 +44,67 @@ geneMatrix	<- as.matrix(Genes)
 normGeneMatrix	<- normalize.quantiles(geneMatrix)
 
 rownames(normGeneMatrix) <- Probes[, "Gene.Name"]
-colnames(normGeneMatrix) <- Cells["FileName", ]
+colnames(normGeneMatrix) <- colnames(Cells)
 
-batches		<- unique(unlist(Cells["FileName",]))
-batchDates	<- unlist(lapply(batches, function(x) Cells["dateEx", grep(x, Cells["FileName",], fixed = TRUE)][1]))
-batchTypes	<- unlist(lapply(batches, function(x) Cells["CellType", grep(x, Cells["FileName",], fixed = TRUE)][1]))
-batchHpf	<- unlist(lapply(batches, function(x) Cells["hpf", grep(x, Cells["FileName",], fixed = TRUE)][1]))
 
-batchVals	<- lapply(batches, function(x) geneMatrix[, which(Cells["FileName", ]==x)])
-batchNormVals 	<- lapply(batches, function(x) normGeneMatrix[, which(Cells["FileName", ]==x)])
+rpl13_Distr	<- log( unlist( normGeneMatrix["rpl13", ]))
+
+png( file.path( plotDir, "rpl13_Distr_plot.png"))
+	plot(sort(rpl13_Distr))
+	abline( h = quantile( rpl13_Distr, 0.05), col = "red")
+	abline( h = quantile( rpl13_Distr, 1), col = "red")
+	abline( h = min( rpl13_Distr[ grep("MC", names(rpl13_Distr))]), col = "black")
+	abline( h = max( rpl13_Distr[ grep("MC", names(rpl13_Distr))]), col = "black")
+	abline( h = max( rpl13_Distr[ grep("IP", names(rpl13_Distr))]), col = "cyan")
+	abline( h = min( rpl13_Distr[ grep("IP", names(rpl13_Distr))]), col = "cyan")
+dev.off()
+
+
+rpl13_keep	<- which( rpl13_Distr > quantile(rpl13_Distr, 0.01) )
+
+Genes_f			<- Genes[,rpl13_keep]
+Cells_f			<- Cells[,rpl13_keep]
+geneMatrix_f		<- as.matrix(Genes_f)
+normGeneMatrix_f	<- normalize.quantiles( geneMatrix_f)
+
+rownames(normGeneMatrix_f) <- Probes[, "Gene.Name"]
+colnames(normGeneMatrix_f) <- colnames(Cells_f)
+
+
+cat(file = qualContLogFile, ncol(Genes_f), " cells remaining after removing cells with rpl13 dropouts\n")
+
+Kanamycin_Distr	<- log( unlist( normGeneMatrix_f["Kanamycin Pos", ]))
+
+png( file.path( plotDir, "Kanamycin_Distr_plot.png"))
+	plot(sort( Kanamycin_Distr))
+	abline( h = quantile( Kanamycin_Distr, 0.01), col = "red")
+	abline( h = quantile( Kanamycin_Distr, 0.95), col = "red")
+	abline( h = min( Kanamycin_Distr[ grep("MC", names( Kanamycin_Distr))]), col = "black")
+	abline( h = max( Kanamycin_Distr[ grep("MC", names( Kanamycin_Distr))]), col = "black")
+	abline( h = max( Kanamycin_Distr[ grep("IP", names( Kanamycin_Distr))]), col = "cyan")
+	abline( h = min( Kanamycin_Distr[ grep("IP", names( Kanamycin_Distr))]), col = "cyan")
+dev.off()
+
+KanamycinPos_keep	<- which( Kanamycin_Distr > quantile(Kanamycin_Distr, 0.01) )
+
+Genes_ff		<- Genes_f[,KanamycinPos_keep]
+Cells_ff		<- Cells_f[,KanamycinPos_keep]
+geneMatrix_ff		<- as.matrix(Genes_ff)
+normGeneMatrix_ff	<- normalize.quantiles( geneMatrix_ff)
+
+rownames(normGeneMatrix_ff) <- Probes[, "Gene.Name"]
+colnames(normGeneMatrix_ff) <- colnames(Cells_ff)
+
+
+cat(file = qualContLogFile, ncol(Genes_ff), " cells remaining after removing cells with Kanamycin Pos dropouts\n")
+
+batches		<- unique(unlist(Cells_ff["FileName",]))
+batchDates	<- unlist(lapply(batches, function(x) Cells_ff["dateEx", grep(x, Cells_ff["FileName",], fixed = TRUE)][1]))
+batchTypes	<- unlist(lapply(batches, function(x) Cells_ff["CellType", grep(x, Cells_ff["FileName",], fixed = TRUE)][1]))
+batchHpf	<- unlist(lapply(batches, function(x) Cells_ff["hpf", grep(x, Cells_ff["FileName",], fixed = TRUE)][1]))
+
+batchVals	<- lapply(batches, function(x) geneMatrix[, which(Cells_ff["FileName", ]==x)])
+batchNormVals 	<- lapply(batches, function(x) normGeneMatrix[, which(Cells_ff["FileName", ]==x)])
 
 names(batchNormVals) <- as.character(batches)
 names(batchVals)     <- as.character(batches)
@@ -87,89 +134,37 @@ png(paste0(plotDir, .Platform$file.sep, "LogNotNormedBatchBoxPlot.png"), width =
 dev.off()
 
 batchProbl 	<- qualMatrix[, which(as.numeric(qualMatrix["batchMedNormVals",])<40)]	#threshold to keep MC (MedNormVal ~ 60)
-cellsProbl_Ind	<- which(Cells["FileName",] %in% colnames(batchProbl))
+cellsProbl_Ind	<- which(Cells_ff["FileName",] %in% colnames(batchProbl))
 
 
-Genes_f		<- Genes[,-cellsProbl_Ind]
-Cells_f		<- Cells[,-cellsProbl_Ind]
+Genes_fff		<- Genes_ff[,-cellsProbl_Ind]
+Cells_fff		<- Cells_ff[,-cellsProbl_Ind]
 
-cat(file = qualContLogFile, ncol(Genes_f), " cells remaining after removing batches with low medians\n")
+cat(file = qualContLogFile, ncol(Genes_fff), " cells remaining after removing batches with low medians\n")
 
 posSpikes	<- c(128, 32, 8, 2, 0.5, 0.125)						# Pos probes in fM
 posProbes	<- c("POS_A", "POS_B", "POS_C", "POS_D", "POS_E", "POS_F")
 
-coefs		<- apply( log2(Genes_f[posProbes,]), 2, function(x) lm( x~log2(posSpikes))$coefficients[2] )
+coefs		<- apply( log2(Genes_fff[posProbes,]), 2, function(x) lm( x~log2(posSpikes))$coefficients[2] )
 
 sortLogCoefs	<- sort(coefs)
 
 png(paste0(plotDir, .Platform$file.sep, "LogSortPosCoefs.png"))
 	plot(sortLogCoefs, main = "Positive quality control coef values")
-	abline( h = 1,   col = "green")
-	abline( h = 1.1, col = "red")
-	abline( h = 0.9, col = "red")
+	abline( h =1, col = "green")
 dev.off()
 
 keepCoefs <- which(coefs > 0.9 & coefs < 1.1)
 
-Genes_ff	<- Genes_f[,keepCoefs]
-Cells_ff	<- Cells_f[,keepCoefs]
+Genes_ffff	<- Genes_fff[,keepCoefs]
+Cells_ffff	<- Cells_fff[,keepCoefs]
 
-cat(file = qualContLogFile, ncol(Genes_ff), " cells remaining after removing cells with poor positive control values\n")
-
-KanamycinPos_Distr		<- log( as.numeric(Genes_ff["Kanamycin Pos", ]))
-names(KanamycinPos_Distr)	<- colnames(Genes_ff)
-
-KanamycinPosTopQuant	<- 0.995
-KanamycinPosBotQuant	<- 0.005
-
-png( file.path( plotDir, "Kanamycin_Distr_plot.png"))
-	plot(sort( KanamycinPos_Distr))
-	abline( h = quantile( KanamycinPos_Distr, KanamycinPosTopQuant), col = "red")
-	abline( h = quantile( KanamycinPos_Distr, KanamycinPosBotQuant), col = "red")
-	abline( h = min( KanamycinPos_Distr[ grep("MC", names( KanamycinPos_Distr))]), col = "black")
-	abline( h = max( KanamycinPos_Distr[ grep("MC", names( KanamycinPos_Distr))]), col = "black")
-	abline( h = max( KanamycinPos_Distr[ grep("IP", names( KanamycinPos_Distr))]), col = "cyan")
-	abline( h = min( KanamycinPos_Distr[ grep("IP", names( KanamycinPos_Distr))]), col = "cyan")
-dev.off()
-
-
-KanamycinPos_keep	<- which( KanamycinPos_Distr > quantile( KanamycinPos_Distr, KanamycinPosBotQuant)
-				& KanamycinPos_Distr < quantile( KanamycinPos_Distr, KanamycinPosTopQuant))
-
-Genes_fff	<- Genes_ff[,KanamycinPos_keep]
-Cells_fff	<- Cells_ff[,KanamycinPos_keep]
-
-cat(file = qualContLogFile, ncol(Genes_fff), " cells remaining after removing cells with Kanamycin Pos dropouts\n")
-
-
-
-rpl13_Distr	<- log(as.numeric(Genes_fff["rpl13", ]))
-names(rpl13_Distr) <- colnames(Genes_fff)
-
-rpl13TopQuant	<- 0.97
-rpl13BotQuant	<- 0.03
-
-rpl13_keep	<- which( rpl13_Distr > quantile(rpl13_Distr, rpl13BotQuant) & rpl13_Distr < quantile(rpl13_Distr, rpl13TopQuant))
-
-png( file.path( plotDir, "rpl13_Distr_plot.png"))
-	plot(sort(rpl13_Distr))
-	abline( h = quantile( rpl13_Distr, rpl13TopQuant), col = "red")
-	abline( h = quantile( rpl13_Distr, rpl13BotQuant), col = "red")
-	abline( h = min( rpl13_Distr[ grep("MC", names(rpl13_Distr))]), col = "black")
-	abline( h = max( rpl13_Distr[ grep("MC", names(rpl13_Distr))]), col = "black")
-	abline( h = max( rpl13_Distr[ grep("IP", names(rpl13_Distr))]), col = "cyan")
-	abline( h = min( rpl13_Distr[ grep("IP", names(rpl13_Distr))]), col = "cyan")
-dev.off()
-
-Genes_ffff	<- Genes_fff[,rpl13_keep]
-Cells_ffff	<- Cells_fff[,rpl13_keep]
-
-cat(file = qualContLogFile, ncol(Genes_ffff), " cells remaining after removing cells with rpl13 dropouts\n")
+cat(file = qualContLogFile, ncol(Genes_ffff), " cells remaining after removing cells with poor positive control values\n")
 
 normIteration <- 0
-repeat{									       #iterations over the background level								      
+repeat{									       #iterations over background level								      
 normIteration <- normIteration + 1
-cat("Starting itration ", normIteration, "\n")
+cat("Starting iteration ", normIteration, "\n")
 
 NanoTable	<- cbind(Probes[,"Class.Name"], Probes[,"Gene.Name"], Probes[,"Accession.."], Genes_ffff, stringsAsFactors = FALSE)
 colnames(NanoTable)[1:3] <- c("Code.Class", "Name", "Accession")
@@ -186,12 +181,12 @@ sm_drop		<- which( sm > 0.9 )
 bg_drop		<- which( abs( bg - mean(bg)) > 3*sd(bg))
 rc_drop		<- which( abs( rc - mean(rc)) > 3*sd(rc))
 
-cat( file = qualContLogFile, "Iteration ", normIteration, length(nf_drop), " cells with inadequate norm factors\n")
-cat( file = qualContLogFile, "Iteration ", normIteration, length(bg_drop), " cells with adequate backgrounds\n")
-cat( file = qualContLogFile, "Iteration ", normIteration, length(sm_drop), " cells with less than 0.9 missing samples\n")
-cat( file = qualContLogFile, "Iteration ", normIteration, length(rc_drop), " cells with not too large RNA content\n")
+cat( file = qualContLogFile, "Iteration ", normIteration, length(nf_drop), " cells with norm factors out of the recommended band\n")
+cat( file = qualContLogFile, "Iteration ", normIteration, length(bg_drop), " cells with the backgrounds out of the recommend band\n")
+cat( file = qualContLogFile, "Iteration ", normIteration, length(sm_drop), " cells with the number of missing samples less than 0.9\n")
+cat( file = qualContLogFile, "Iteration ", normIteration, length(rc_drop), " cells with RNA content deviating too much from the mean\n")
 
-"%u%"		<- union							#union() supports only two arguments
+"%u%"		<- union							#union() supports only two arguments, define intersect operation
 norm_drop	<- nf_drop %u% sm_drop %u% bg_drop %u% rc_drop
 
 if( length(norm_drop) == 0){break}
@@ -210,12 +205,12 @@ Genes_n		 <- NanoStringNorm(x = NanoTable, CodeCount = "sum", Background = "mean
 
 geneMatrix_n	<- as.matrix(Genes_n)
 
-batches_n	<- unique(unlist(Cells_ffff["batch",]))
-batchDates_n	<- unlist(lapply(batches_n, function(x) Cells_ffff["dateEx", grep(x, Cells_ffff["batch",])][1]))
-batchTypes_n	<- unlist(lapply(batches_n, function(x) Cells_ffff["CellType", grep(x, Cells_ffff["batch",])][1]))
-batchHpf_n	<- unlist(lapply(batches_n, function(x) Cells_ffff["hpf", grep(x, Cells_ffff["batch",])][1]))
+batches_n	<- unique(unlist(Cells_ffff["FileName",]))
+batchDates_n	<- unlist(lapply(batches_n, function(x) Cells_ffff["dateEx", grep(x, Cells_ffff["FileName",], fixed = TRUE)][1]))
+batchTypes_n	<- unlist(lapply(batches_n, function(x) Cells_ffff["CellType", grep(x, Cells_ffff["FileName",], fixed = TRUE)][1]))
+batchHpf_n	<- unlist(lapply(batches_n, function(x) Cells_ffff["hpf", grep(x, Cells_ffff["FileName",], fixed = TRUE)][1]))
 
-batchVals_n	<- lapply(batches_n, function(x) geneMatrix_n[, which(Cells_ffff["batch", ]==x)])
+batchVals_n	<- lapply(batches_n, function(x) geneMatrix_n[, which(Cells_ffff["FileName", ]==x)])
 
 names(batchVals_n) <- as.character(batches_n)
 
@@ -241,7 +236,7 @@ png(paste0(plotDir, .Platform$file.sep, "LogNormalizedBatchBoxPlot.png"), width 
 dev.off()
 
 
-write.table(Genes_n, file = file.path(resDir, "NormalizedExTable.csv"), sep = "\t")
+write.table(Genes_n, file = paste0(resDir, .Platform$file.sep, "NormalizedExTable.csv"), sep = "\t")
 
 
 
@@ -252,8 +247,8 @@ write.table(cells_tbl, file=qualContLogFile, sep = "\t")
 
 close(qualContLogFile)	
 
-write.table( Genes_ffff, file = file.path( resDir, "expressionTableDedupQC.csv"), sep = "\t" )
-write.table( Cells_ffff, file = file.path( resDir, "cellDescripitonsDedupQC.csv"),sep = "\t" )
+write.table( Genes_ffff, file = paste0("Res", .Platform$file.sep, "expressionTableDedupQC.csv"), sep = "\t" )
+write.table( Cells_ffff, file = paste0("Res", .Platform$file.sep, "cellDescripitonsDedupQC.csv"),sep = "\t" )
 
 
 

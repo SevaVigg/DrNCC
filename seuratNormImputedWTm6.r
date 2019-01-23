@@ -15,17 +15,12 @@ if(!require(DrImpute)){
 }
 
 #plotDir <- file.path(getwd(), "Plot")
-imputeDir	<- file.path(getwd(), "Imputed")
-dir.create( imputeDir, showWarnings = FALSE)
+resDir	<- file.path(getwd(), "Imputed_WT")
+dir.create( resDir, showWarnings = FALSE)
 
-imputeWTDir 	<- file.path( imputeDir, "WT")
-dir.create( imputeWTDir, showWarnings = FALSE)
-
-dirQCres <- file.path( getwd(), "QualityControl", "Res") 
-
-Genes	<- read.table( file = file.path( dirQCres, "NormalizedExTable.csv"), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE )
-Cells	<- read.table( file = file.path( dirQCres, "NormalizedExTable.csv"), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE )
-Probes	<- read.table( file = file.path( dirQCres, "NormalizedExTable.csv"), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE )
+Genes	<- read.table( file = paste0("Res", .Platform$file.sep, "NormalizedExTable.csv"), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE )
+Cells	<- read.table( file = paste0("Res", .Platform$file.sep, "cellDescripitonsDedupQC.csv"), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE)
+Probes	<- read.table( file = paste0("Res", .Platform$file.sep, "ProbesDescripitonsDedup.csv"), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE)
 
 rownames(Genes)[which(rownames(Genes)=="Kanamycin Pos")] <- "Kanamycin_Pos"
 
@@ -39,7 +34,7 @@ types 		<- unique(paste0(Cells["hpf",], "_", Cells["CellType",]))
 hpf_CellType	<- t(data.frame(hpf_CellType = paste0(Cells["hpf",], "_", Cells["CellType",]), row.names = colnames(Cells)))
 Cells		<- rbind(Cells, hpf_CellType)
 
-newTypes   	<- c("18", "21", "24", "Tl", "30", "mitfa-", "sox10-", "36", "48", "I", "M", "60", "72")
+newTypes   	<- c("18", "21", "24", "Tl", "30", "W2", "m6", "36", "48", "I", "M", "60", "72")
 names(newTypes)	<- types
 
 allGenes	<- rownames(Genes)
@@ -47,7 +42,7 @@ logExps 	<- log2(1+Genes)
 
 
 #drop mutants
-logExpsWT	<- logExps[, setdiff( seq_along(colnames(logExps)), grep("(sox10|mitfa)", colnames(logExps)))]
+logExpsWT	<- logExps[, setdiff( seq_along(colnames(logExps)), grep("W2", colnames(logExps)))]
 
 
 #and now impute for dropouts
